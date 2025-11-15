@@ -2,6 +2,7 @@
 outputs/
 *.txt
 *.log
+.created
 
 # Downloaded drivers
 *.tar.xz
