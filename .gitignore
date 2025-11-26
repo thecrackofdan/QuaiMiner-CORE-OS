@@ -48,7 +48,8 @@ build/
 
 # OS-specific
 *.bat
-*.ps1
+# Allow PowerShell automation scripts
+!setup-github-release.ps1
 *.sh
 # Essential shell scripts (explicitly include)
 !miner-dashboard/start.sh
