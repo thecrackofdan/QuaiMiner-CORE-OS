@@ -37,10 +37,10 @@ class MiningDashboard {
         
         // Verify essential CONFIG properties exist
         if (!CONFIG.charts || typeof CONFIG.charts.maxHistoryPoints === 'undefined') {
-            console.warn('CONFIG.charts.maxHistoryPoints not found, using default: 60');
+            if (window.logger) window.logger.warn('CONFIG.charts.maxHistoryPoints not found, using default: 60');
         }
         if (typeof CONFIG.updateInterval === 'undefined') {
-            console.warn('CONFIG.updateInterval not found, using default: 5000');
+            if (window.logger) window.logger.warn('CONFIG.updateInterval not found, using default: 5000');
         }
         
         this.startTime = Date.now();
@@ -196,7 +196,7 @@ class MiningDashboard {
                 loadingIndicator.style.display = 'none';
             }
         } catch (error) {
-            console.error('ERROR in init():', error);
+            if (window.logger) window.logger.error('ERROR in init()', error);
             this.addLog(`Initialization error: ${error.message}`, 'error');
             
             // Show error in loading indicator
@@ -529,7 +529,7 @@ class MiningDashboard {
                 this.addLog('Data exported as CSV', 'success');
             }
         } catch (error) {
-            console.error('Export error:', error);
+            if (window.logger) window.logger.error('Export error', error);
             this.addLog(`Export failed: ${error.message}`, 'error');
         }
     }
@@ -708,7 +708,7 @@ class MiningDashboard {
         const fetchBtn = document.getElementById('fetchAddressBtn');
         
         if (!addressInput || !fetchBtn) {
-            console.warn('Manual address input elements not found');
+            if (window.logger) window.logger.warn('Manual address input elements not found');
             return;
         }
         
@@ -761,7 +761,7 @@ class MiningDashboard {
             'window.ethereum.isPelagus': window.ethereum?.isPelagus || false,
             'window.ethereum.providers': window.ethereum?.providers?.length || 0
         };
-        console.log('Available wallet providers:', providers);
+        if (window.logger) window.logger.debug('Available wallet providers', providers);
         this.addLog(`Wallet detection: pelagus=${providers['window.pelagus']}, ethereum=${providers['window.ethereum']}`, 'info');
     }
 
@@ -838,7 +838,7 @@ class MiningDashboard {
                 }
                 
                 // Debug logging
-                console.log('Pelagus connection attempt:', {
+                if (window.logger) window.logger.debug('Pelagus connection attempt', {
                     'window.pelagus': typeof window.pelagus,
                     'window.ethereum': typeof window.ethereum,
                     'ethereum.isPelagus': window.ethereum?.isPelagus,
@@ -960,7 +960,7 @@ class MiningDashboard {
                 }
             } catch (err) {
                 // Not connected
-                console.log('Pelagus not connected');
+                if (window.logger) window.logger.debug('Pelagus not connected');
             }
         }
     }
@@ -1025,7 +1025,7 @@ class MiningDashboard {
                 } catch (error) {
                     // Log error but continue to next method
                     if (error.code !== 4001) { // Don't log user rejection
-                        console.log(`Method ${method} failed:`, error.message);
+                        if (window.logger) window.logger.warn(`Method ${method} failed`, error);
                     }
                     continue;
                 }
@@ -1038,7 +1038,7 @@ class MiningDashboard {
                 throw new Error('No accounts returned. User may need to approve connection in Pelagus.');
             }
         } catch (error) {
-            console.error('Pelagus connection error:', error);
+            if (window.logger) window.logger.error('Pelagus connection error', error);
             
             if (error.code === 4001) {
                 this.addLog('Connection rejected by user', 'warning');
@@ -1088,7 +1088,7 @@ class MiningDashboard {
             const balanceInQuai = parseInt(balance, 16) / Math.pow(10, 18);
             walletBalance.textContent = `${balanceInQuai.toFixed(4)} QUAI`;
         } catch (error) {
-            console.error('Error fetching balance:', error);
+            if (window.logger) window.logger.error('Error fetching balance', error);
             walletBalance.textContent = 'Balance unavailable';
         }
 
@@ -1449,7 +1449,7 @@ class MiningDashboard {
             }
 
         } catch (error) {
-            console.error('Error fetching mining rewards:', error);
+            if (window.logger) window.logger.error('Error fetching mining rewards', error);
             txHistoryContainer.innerHTML = `<div class="tx-history-placeholder">Error loading transactions: ${error.message}</div>`;
             this.addLog(`Error fetching mining rewards: ${error.message}`, 'error');
         }
@@ -1642,7 +1642,7 @@ class MiningDashboard {
                 await this.fetchQuaiScanAddressInfo(this.connectedWallet);
             }
         } catch (error) {
-            console.error('QuaiScan fetch error:', error);
+            if (window.logger) window.logger.error('QuaiScan fetch error', error);
             this.addLog(`QuaiScan error: ${error.message}`, 'error');
         }
     }
@@ -1724,7 +1724,7 @@ class MiningDashboard {
                     }
                 } catch (e) {
                     if (e.message.includes('CORS')) {
-                        console.warn('Elastic API CORS error - may need server-side proxy');
+                        if (window.logger) window.logger.warn('Elastic API CORS error - may need server-side proxy');
                     }
                     continue;
                 }
@@ -1790,7 +1790,7 @@ class MiningDashboard {
                 this.updateElasticUI();
             }
         } catch (error) {
-            console.error('Error fetching Elastic blockchain data:', error);
+            if (window.logger) window.logger.error('Error fetching Elastic blockchain data', error);
             if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
                 this.addLog('Elastic API CORS error. Using Prometheus/RPC fallback.', 'warning');
             } else {
@@ -1880,7 +1880,7 @@ class MiningDashboard {
                     }
                 } catch (e) {
                     if (e.message.includes('CORS')) {
-                        console.warn('QuaiScan API CORS error - may need server-side proxy');
+                        if (window.logger) window.logger.warn('QuaiScan API CORS error - may need server-side proxy');
                     }
                     continue;
                 }
@@ -1896,7 +1896,7 @@ class MiningDashboard {
                     }
                 }
             } catch (rpcError) {
-                console.debug('RPC fallback for block number failed:', rpcError);
+                if (window.logger) window.logger.debug('RPC fallback for block number failed', rpcError);
             }
 
             // Process QuaiScan API response
@@ -1919,7 +1919,7 @@ class MiningDashboard {
             this.quaiscanMetricsData.lastUpdate = Date.now();
             this.updateQuaiScanMetricsUI();
         } catch (error) {
-            console.error('Error fetching QuaiScan network metrics:', error);
+            if (window.logger) window.logger.error('Error fetching QuaiScan network metrics', error);
             if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
                 this.addLog('QuaiScan API CORS error. Check API endpoint in config.', 'warning');
             } else {
@@ -2035,7 +2035,7 @@ class MiningDashboard {
                 } catch (e) {
                     // Log CORS errors but continue
                     if (e.message.includes('CORS')) {
-                        console.warn('QuaiScan address API CORS error');
+                        if (window.logger) window.logger.warn('QuaiScan address API CORS error');
                     }
                     continue;
                 }
@@ -2075,7 +2075,7 @@ class MiningDashboard {
             // Transaction history section is shown when wallet is connected
             // QuaiScan UI updates are handled in transaction history section
         } catch (error) {
-            console.error('Error fetching QuaiScan address info:', error);
+            if (window.logger) window.logger.error('Error fetching QuaiScan address info', error);
             // Better error messages
             if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
                 this.addLog('QuaiScan address API CORS error. Using RPC fallback for balance.', 'warning');
@@ -2499,8 +2499,23 @@ class MiningDashboard {
         // Update QUAI and QI earnings (solo mining rewards)
         const earningsPerHour = this.miningData.hashRate * CONFIG.mining.earningsPerMHPerHour;
         this.miningData.rewards.quaiEarnings += earningsPerHour / (3600 / (this.updateInterval / 1000));
-        // QI is typically a percentage of QUAI (adjust based on SOAP protocol)
-        this.miningData.rewards.qiEarnings += (earningsPerHour * 0.1) / (3600 / (this.updateInterval / 1000));
+        
+        // QI token production is energy-based (tied to energy consumption)
+        // More energy-efficient mining = more QI tokens per kWh
+        if (typeof QITokenCalculator !== 'undefined') {
+            const qiCalculator = new QITokenCalculator();
+            const totalPower = this.miningData.powerUsage || 0;
+            const totalHashRate = this.miningData.hashRate || 0;
+            const efficiency = totalPower > 0 ? totalHashRate / totalPower : 0;
+            const hours = (this.updateInterval / 1000) / 3600; // Convert ms to hours
+            const currentChain = this.miningData.network?.currentChain || 'Prime';
+            
+            const qiData = qiCalculator.calculateQIProduction(totalPower, hours, efficiency, currentChain);
+            this.miningData.rewards.qiEarnings += qiData.qiProduced;
+        } else {
+            // Fallback: QI as percentage of QUAI (legacy calculation)
+            this.miningData.rewards.qiEarnings += (earningsPerHour * 0.1) / (3600 / (this.updateInterval / 1000));
+        }
 
         // Only simulate difficulty if we haven't received real data from node
         // Real difficulty will be updated by fetchNodeMetrics()
@@ -2681,6 +2696,89 @@ class MiningDashboard {
 
         // Update GPU cards
         this.updateGPUCards();
+        
+        // Update real-time daily profit
+        this.updateDailyProfit();
+    }
+    
+    /**
+     * Update daily profit card with real-time calculation
+     */
+    async updateDailyProfit() {
+        const dailyProfitEl = document.getElementById('dailyProfit');
+        const dailyProfitUnit = document.getElementById('dailyProfitUnit');
+        
+        if (!dailyProfitEl) return;
+        
+        // Get current mining stats
+        const hashRate = this.miningData.hashRate || 0;
+        const powerUsage = this.miningData.powerUsage || 0;
+        
+        // Skip if no data
+        if (hashRate === 0 || powerUsage === 0) {
+            dailyProfitEl.textContent = '$0.00';
+            if (dailyProfitUnit) dailyProfitUnit.textContent = 'USD';
+            return;
+        }
+        
+        // Get settings from profitability calculator or defaults
+        const savedSettings = localStorage.getItem('profitabilitySettings');
+        const settings = savedSettings ? JSON.parse(savedSettings) : {};
+        const electricityRate = settings.electricityRate || 0.10;
+        const quaiPrice = settings.quaiPrice || 0.01;
+        // Solo mining - no pool fees
+        const poolFee = 0;
+        
+        try {
+            // Use profitability calculator's calculation method
+            if (typeof window.profitabilityCalculator !== 'undefined') {
+                // Calculate profit using the calculator's logic
+                const networkHashRate = this.miningData.network.networkHashRate || 0;
+                const blockTime = this.miningData.network.blockTime || 10;
+                const blockReward = 1.0; // Base reward
+                
+                const blocksPerDay = (86400 / blockTime);
+                let dailyQuai = 0;
+                
+                if (networkHashRate > 0) {
+                    const shareOfNetwork = hashRate / networkHashRate;
+                    dailyQuai = shareOfNetwork * blocksPerDay * blockReward;
+                } else {
+                    // Fallback estimate
+                    dailyQuai = (hashRate / 100) * 0.01;
+                }
+                
+                const dailyRevenue = dailyQuai * quaiPrice * (1 - poolFee / 100);
+                const dailyCost = (powerUsage / 1000) * 24 * electricityRate;
+                const dailyProfit = dailyRevenue - dailyCost;
+                
+                // Update UI
+                dailyProfitEl.textContent = `$${dailyProfit.toFixed(2)}`;
+                if (dailyProfitUnit) dailyProfitUnit.textContent = 'USD';
+                
+                // Color code: green for profit, red for loss
+                if (dailyProfit >= 0) {
+                    dailyProfitEl.style.color = '#00ff00';
+                    dailyProfitEl.parentElement.parentElement.style.borderColor = 'var(--success-color)';
+                } else {
+                    dailyProfitEl.style.color = '#ff0000';
+                    dailyProfitEl.parentElement.parentElement.style.borderColor = '#ff0000';
+                }
+            } else {
+                // Fallback simple calculation
+                const dailyCost = (powerUsage / 1000) * 24 * electricityRate;
+                const estimatedDailyQuai = (hashRate / 100) * 0.01; // Rough estimate
+                const dailyRevenue = estimatedDailyQuai * quaiPrice * (1 - poolFee / 100);
+                const dailyProfit = dailyRevenue - dailyCost;
+                
+                dailyProfitEl.textContent = `$${dailyProfit.toFixed(2)}`;
+                if (dailyProfitUnit) dailyProfitUnit.textContent = 'USD';
+                dailyProfitEl.style.color = dailyProfit >= 0 ? '#00ff00' : '#ff0000';
+            }
+        } catch (error) {
+            if (window.logger) window.logger.debug('Error calculating daily profit', error);
+            dailyProfitEl.textContent = '$0.00';
+        }
     }
     
     calculateTimeToBlock() {
@@ -2708,7 +2806,7 @@ class MiningDashboard {
     updateGPUCards() {
         const gpuGrid = document.getElementById('gpuGrid');
         if (!gpuGrid) {
-            console.warn('GPU grid element not found');
+            if (window.logger) window.logger.warn('GPU grid element not found');
             return;
         }
         
@@ -3001,7 +3099,7 @@ class MiningDashboard {
                     }
                 } catch (workError) {
                     // Work call failed, but that's okay - not all nodes support this
-                    console.debug('Work data fetch failed (this is normal):', workError);
+                    if (window.logger) window.logger.debug('Work data fetch failed (this is normal)', workError);
                 }
             } else {
                 // Mining is not active
@@ -3018,7 +3116,7 @@ class MiningDashboard {
             
         } catch (error) {
             this.addLog(`Miner API Error: ${error.message}`, 'error');
-            console.error('Failed to fetch mining data from node RPC:', error);
+            if (window.logger) window.logger.error('Failed to fetch mining data from node RPC', error);
             // Don't mark as inactive on first error - might be temporary connection issue
         } finally {
             // Restore original RPC URL if we changed it
@@ -3391,7 +3489,7 @@ class MiningDashboard {
             this.nodeMetricsErrorLogged = false; // Reset error flag on success
 
         } catch (error) {
-            console.error('Error fetching node metrics:', error);
+            if (window.logger) window.logger.error('Error fetching node metrics', error);
             // Don't spam logs for connection errors
             if (!this.nodeMetricsErrorLogged) {
                 this.addLog(`Node metrics unavailable: ${error.message}. Check RPC URL: ${CONFIG.node.rpcUrl}`, 'warning');
@@ -3437,7 +3535,7 @@ class MiningDashboard {
                     return await this.executeRpcCall(method, params);
                 }, retries, 1000);
             } catch (error) {
-                console.error(`RPC call ${method} failed after ${retries} retries:`, error);
+                if (window.logger) window.logger.error(`RPC call ${method} failed after ${retries} retries`, error);
                 return { error: { message: error.message } };
             }
         } else {
@@ -3481,12 +3579,12 @@ class MiningDashboard {
                 if (response.ok) {
                     const data = await response.json();
                     if (data.error) {
-                        console.error(`RPC error for ${method}:`, data.error);
+                        if (window.logger) window.logger.error(`RPC error for ${method}`, data.error);
                         return { error: data.error };
                     }
                     return data;
                 } else {
-                    console.error(`RPC HTTP error for ${method}:`, response.status, response.statusText);
+                    if (window.logger) window.logger.error(`RPC HTTP error for ${method}`, { status: response.status, statusText: response.statusText });
                     return { error: { message: `HTTP ${response.status}: ${response.statusText}` } };
                 }
             } catch (error) {
@@ -3511,7 +3609,7 @@ class MiningDashboard {
             // Handle any outer errors
             if (error.message && error.message.includes('CORS')) {
                 // CORS error - provide helpful message
-                console.error('CORS Error:', error.message);
+                if (window.logger) window.logger.error('CORS Error', error);
                 return { 
                     error: { 
                         message: `CORS blocked: Cannot access ${CONFIG.node.rpcUrl} from browser. Enable CORS on your Quai node (add --http.corsdomain="*" or --http.corsdomain="http://localhost:8080" to node startup) or use a proxy server.`,
@@ -3843,49 +3941,8 @@ class MiningDashboard {
             testMinerConfigBtn.onclick = () => this.testMinerConfig();
         }
 
-        // Initialize pool manager
-        // Initialize Enhanced Pool Manager (with automatic switching)
-        if (typeof EnhancedPoolManager !== 'undefined') {
-            this.poolManager = new EnhancedPoolManager(this);
-            window.poolManager = this.poolManager; // Make globally accessible
-        } else if (typeof PoolManager !== 'undefined') {
-            this.poolManager = new PoolManager(this);
-            window.poolManager = this.poolManager; // Make globally accessible
-        }
-
-        // Setup pool selection in miner config modal
-        const miningModeSelect = document.getElementById('miningModeSelect');
-        const poolSelectionItem = document.getElementById('poolSelectionItem');
-        const poolSelect = document.getElementById('poolSelect');
-        
-        if (miningModeSelect && poolSelectionItem) {
-            miningModeSelect.onchange = (e) => {
-                if (e.target.value === 'pool') {
-                    poolSelectionItem.style.display = 'block';
-                    this.loadPoolList();
-                } else {
-                    poolSelectionItem.style.display = 'none';
-                }
-            };
-        }
-
-        if (poolSelect && this.poolManager) {
-            poolSelect.onchange = (e) => {
-                const poolId = e.target.value;
-                if (poolId && poolId !== 'custom') {
-                    const pool = this.poolManager.pools.find(p => p.id === poolId);
-                    if (pool) {
-                        this.displayPoolInfo(pool);
-                        const stratumInput = document.getElementById('stratumAddress');
-                        if (stratumInput) {
-                            stratumInput.value = pool.url;
-                        }
-                    }
-                } else {
-                    document.getElementById('poolInfo').style.display = 'none';
-                }
-            };
-        }
+        // Pool Manager removed - solo mining only
+        // All mining is solo mining to your own node
 
         // GPU Tuning button
         const gpuTuneBtn = document.getElementById('gpuTuneBtn');
@@ -3974,17 +4031,7 @@ class MiningDashboard {
             window.difficultyAdjustor = this.difficultyAdjustor;
         }
 
-        // Initialize DePool Manager
-        if (typeof DePoolManager !== 'undefined') {
-            this.depoolManager = new DePoolManager(this);
-            window.depoolManager = this.depoolManager;
-        }
-
-        // Initialize DePool UI
-        if (typeof DePoolUI !== 'undefined') {
-            this.depoolUI = new DePoolUI(this);
-            window.depoolUI = this.depoolUI;
-        }
+        // DePool functionality removed - focus is on solo mining with personal node
 
 
         // Initialize Enhanced Onboarding
@@ -4038,10 +4085,7 @@ class MiningDashboard {
             }
         }
         
-        // Handle URL parameters for pool selection (after pool manager is initialized)
-        setTimeout(() => {
-            this.handlePoolSelectionFromURL();
-        }, 2000);
+        // Pool selection from URL removed - solo mining only
         
         // Initialize Quai Network Features
         if (typeof QuaiFeatures !== 'undefined') {
@@ -4207,56 +4251,16 @@ class MiningDashboard {
     }
     
     /**
-     * Load pool list for selection
+     * Load solo mining configuration (pool selection removed)
+     * This now just ensures the stratum URL is set correctly for solo mining
      */
     async loadPoolList() {
-        try {
-            const response = await fetch('/api/pools');
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success && data.pools) {
-                    const poolSelect = document.getElementById('poolSelect');
-                    if (poolSelect) {
-                        // Clear existing options except first
-                        poolSelect.innerHTML = '<option value="">Choose a pool...</option>';
-                        data.pools.forEach(pool => {
-                            const option = document.createElement('option');
-                            option.value = pool.id;
-                            option.textContent = `${pool.name} (${pool.feePercent} fee)`;
-                            poolSelect.appendChild(option);
-                        });
-                        const customOption = document.createElement('option');
-                        customOption.value = 'custom';
-                        customOption.textContent = 'Custom Pool';
-                        poolSelect.appendChild(customOption);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error loading pools:', error);
-        }
+        // Pool selection removed - solo mining only
+        // This method kept for compatibility but does nothing
+        // The /api/pools endpoint now returns solo mining config only
     }
 
-    /**
-     * Display pool information
-     */
-    displayPoolInfo(pool) {
-        const poolInfo = document.getElementById('poolInfo');
-        if (!poolInfo) return;
-
-        document.getElementById('poolFee').textContent = pool.feePercent;
-        document.getElementById('poolPayout').textContent = pool.payout;
-        document.getElementById('poolMinPayout').textContent = pool.minPayout;
-        document.getElementById('poolUptime').textContent = pool.uptime;
-        document.getElementById('poolDescription').textContent = pool.description;
-        
-        const guideLink = document.getElementById('poolGuideLink');
-        if (guideLink) {
-            guideLink.href = '/docs/POOLS_GUIDE.md';
-        }
-
-        poolInfo.style.display = 'block';
-    }
+    // displayPoolInfo() function removed - solo mining only
 
     /**
      * Save miner configuration

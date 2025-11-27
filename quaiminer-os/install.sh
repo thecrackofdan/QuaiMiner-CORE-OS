@@ -153,11 +153,7 @@ cat > "$CONFIG_DIR/config.json" << EOF
         "stratumProxy": "localhost:3333",
         "requireSynced": true
     },
-    "depool": {
-        "enabled": false,
-        "address": "",
-        "port": 0
-    },
+    // Depool configuration removed - solo mining only
     "gpu": {
         "type": "$GPU_TYPE",
         "model": "$([ "$RX590_DETECTED" = "true" ] && echo "RX 590" || echo "")",
@@ -317,19 +313,7 @@ case "$1" in
         jq ".node.rpcUrl = \"$2\"" "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
         echo "✅ Node RPC configured: $2"
         ;;
-    enable-depool)
-        if [ -z "$2" ] || [ -z "$3" ]; then
-            echo "Usage: quaiminer-config enable-depool <depool_address> <port>"
-            exit 1
-        fi
-        jq ".depool.enabled = true | .depool.address = \"$2\" | .depool.port = $3" "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-        echo "✅ Depool enabled: $2:$3"
-        echo "⚠️  Depool functionality is coming soon!"
-        ;;
-    disable-depool)
-        jq ".depool.enabled = false" "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-        echo "✅ Depool disabled"
-        ;;
+    # Depool commands removed - solo mining only
     *)
         echo "QuaiMiner OS Configuration Manager"
         echo "Solo Mining with Your Own Node"
@@ -338,8 +322,6 @@ case "$1" in
         echo "  quaiminer-config set-stratum <address>     - Set node's stratum proxy address"
         echo "  quaiminer-config set-wallet <address>      - Set wallet address for coinbase"
         echo "  quaiminer-config set-node-rpc <url>        - Set Quai node RPC URL"
-        echo "  quaiminer-config enable-depool <addr> <port> - Enable depool (future feature)"
-        echo "  quaiminer-config disable-depool            - Disable depool"
         echo "  quaiminer-config show                      - Show current configuration"
         echo ""
         echo "Examples:"

@@ -39,10 +39,8 @@ class ProfitabilityCalculator {
                         <label>QUAI Price ($):</label>
                         <input type="number" id="calcQuaiPrice" step="0.001" value="0.01">
                     </div>
-                    <div class="input-group">
-                        <label>Pool Fee (%):</label>
-                        <input type="number" id="calcPoolFee" step="0.1" value="0" min="0" max="100">
-                    </div>
+                    <!-- Pool Fee removed - solo mining has 0% fees -->
+                    <input type="hidden" id="calcPoolFee" value="0">
                     <button class="btn-primary" id="calculateBtn">Calculate</button>
                     <button class="btn-secondary" id="useCurrentStatsBtn">Use Current Stats</button>
                 </div>
@@ -72,6 +70,18 @@ class ProfitabilityCalculator {
                         <div class="result-item">
                             <span class="result-label">Daily QUAI:</span>
                             <span class="result-value" id="dailyQuai">0.000000</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Daily QI (Energy-Based):</span>
+                            <span class="result-value" id="dailyQI">0.000000</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">QI Value:</span>
+                            <span class="result-value" id="qiValue">$0.00</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">QI per kWh:</span>
+                            <span class="result-value" id="qiPerKWh">0.00</span>
                         </div>
                         <div class="result-item">
                             <span class="result-label">ROI (Break-even):</span>
@@ -188,7 +198,7 @@ class ProfitabilityCalculator {
                 }
             }
         } catch (error) {
-            console.debug('Using fallback calculations:', error);
+            if (window.logger) window.logger.debug('Using fallback calculations', error);
         }
         
         // Accurate profitability calculation
@@ -206,10 +216,26 @@ class ProfitabilityCalculator {
             dailyQuai = (hashRate / 100) * 0.01;
         }
         
+        // Calculate QUAI revenue
         const dailyRevenue = dailyQuai * quaiPrice * (1 - poolFee / 100);
-        const dailyCost = (power / 1000) * 24 * electricity;
-        const dailyProfit = dailyRevenue - dailyCost;
+        
+        // Calculate QI token production (energy-based)
+        let dailyQI = 0;
+        let qiValue = 0;
+        let qiPerKWh = 0;
         const efficiency = hashRate / power;
+        if (typeof QITokenCalculator !== 'undefined') {
+            const qiCalculator = new QITokenCalculator();
+            const qiData = qiCalculator.calculateQIProduction(power, 24, efficiency, 'Prime');
+            dailyQI = qiData.qiProduced;
+            qiValue = qiData.qiValueUSD;
+            qiPerKWh = qiData.qiPerKWh;
+        }
+        
+        // Combined revenue (QUAI + QI)
+        const totalRevenue = dailyRevenue + qiValue;
+        const dailyCost = (power / 1000) * 24 * electricity;
+        const dailyProfit = totalRevenue - dailyCost;
         
         // Calculate ROI (break-even days)
         const gpuCost = parseFloat(localStorage.getItem('gpuCost')) || 0;
@@ -269,6 +295,14 @@ class ProfitabilityCalculator {
             yearlyProfitEl.style.color = results.yearlyProfit >= 0 ? '#00ff00' : '#ff0000';
         }
         if (dailyQuaiEl) dailyQuaiEl.textContent = formatQuai(results.dailyQuai || 0);
+        
+        // Update QI values
+        const dailyQIEl = document.getElementById('dailyQI');
+        const qiValueEl = document.getElementById('qiValue');
+        const qiPerKWhEl = document.getElementById('qiPerKWh');
+        if (dailyQIEl) dailyQIEl.textContent = formatQuai(results.dailyQI || 0);
+        if (qiValueEl) qiValueEl.textContent = formatCurrency(results.qiValue || 0);
+        if (qiPerKWhEl) qiPerKWhEl.textContent = (results.qiPerKWh || 0).toFixed(4);
         if (roiEl) {
             if (results.breakEvenDays > 0) {
                 roiEl.textContent = `${results.breakEvenDays} days`;

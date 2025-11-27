@@ -205,18 +205,8 @@ class MiningInsights {
             }
         }
         
-        // Pool fee insights
-        const currentPool = this.dashboard.poolManager?.currentPool;
-        if (currentPool && currentPool.fee > 1.0) {
-            insights.push({
-                type: 'warning',
-                category: 'pool',
-                title: 'High Pool Fee',
-                message: `Current pool fee is ${currentPool.feePercent}. Consider switching to a pool with lower fees to increase profitability.`,
-                action: 'Switch Pool',
-                priority: 'medium'
-            });
-        }
+        // Pool fee insights removed - solo mining has 0% fees
+        // No pool fee warnings needed for solo mining
         
         this.insights.optimization = insights;
         return insights;

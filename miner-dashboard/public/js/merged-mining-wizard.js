@@ -162,7 +162,7 @@ class MergedMiningWizard {
                                             <div>
                                                 <strong style="text-transform: capitalize; font-size: 0.9rem;">${region} ${zoneNum}</strong>
                                                 <p style="margin: 2px 0 0 0; color: var(--text-secondary); font-size: 0.75rem;">
-                                                    ${region === 'cyprus' ? 'Region 1' : region === 'paxos' ? 'Region 2' : 'Region 3'}, Zone ${zoneNum}
+                                                    ${region === 'cyprus' ? 'Cyprus' : region === 'paxos' ? 'Paxos' : 'Hydra'}-${zoneNum}
                                                 </p>
                                             </div>
                                         </label>

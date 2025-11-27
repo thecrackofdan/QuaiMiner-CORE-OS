@@ -154,16 +154,7 @@ async function updateConfig(updates) {
             config.autoStart = updates.autoStart;
         }
         
-        // Depool configuration (future feature)
-        if (updates.depoolEnabled !== undefined) {
-            config.depool.enabled = updates.depoolEnabled;
-        }
-        if (updates.depoolAddress !== undefined) {
-            config.depool.address = updates.depoolAddress;
-        }
-        if (updates.depoolPort !== undefined) {
-            config.depool.port = updates.depoolPort;
-        }
+        // Depool configuration removed - solo mining only
         
         // Merged mining configuration
         if (updates.mining && updates.mining.mergedMining) {

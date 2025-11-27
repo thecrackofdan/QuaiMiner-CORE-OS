@@ -24,10 +24,15 @@ class AutoChainSwitcher {
             Cyprus: 0.8,
             Paxos: 0.8,
             Hydra: 0.8,
-            'Zone-0': 0.6,
-            'Zone-1': 0.6,
-            'Zone-2': 0.6,
-            'Zone-3': 0.6
+            'Cyprus-1': 0.6,
+            'Cyprus-2': 0.6,
+            'Cyprus-3': 0.6,
+            'Paxos-1': 0.6,
+            'Paxos-2': 0.6,
+            'Paxos-3': 0.6,
+            'Hydra-1': 0.6,
+            'Hydra-2': 0.6,
+            'Hydra-3': 0.6
         };
         this.shardingEnabled = false;
         this.zonePreferences = [];
@@ -266,7 +271,9 @@ class AutoChainSwitcher {
      */
     enableSharding(zones = []) {
         this.shardingEnabled = true;
-        this.zonePreferences = zones.length > 0 ? zones : ['Zone-0', 'Zone-1', 'Zone-2', 'Zone-3'];
+        // Official Quai Network zone names
+        // Reference: https://docs.v2.qu.ai/docs/learn/advanced-introduction/architecture
+        this.zonePreferences = zones.length > 0 ? zones : ['Cyprus-1', 'Cyprus-2', 'Cyprus-3', 'Paxos-1', 'Paxos-2', 'Paxos-3', 'Hydra-1', 'Hydra-2', 'Hydra-3'];
         logger.info('Zone sharding enabled', { zones: this.zonePreferences });
     }
 

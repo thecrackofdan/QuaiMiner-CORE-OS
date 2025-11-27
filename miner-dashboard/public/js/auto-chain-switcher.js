@@ -78,16 +78,31 @@ class AutoChainSwitcherUI {
                             <label style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.25rem;">Preferred Zones:</label>
                             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                 <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
-                                    <input type="checkbox" class="zone-checkbox" value="Zone-0" checked> Zone-0
+                                    <input type="checkbox" class="zone-checkbox" value="Cyprus-1" checked> Cyprus-1
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
-                                    <input type="checkbox" class="zone-checkbox" value="Zone-1" checked> Zone-1
+                                    <input type="checkbox" class="zone-checkbox" value="Cyprus-2" checked> Cyprus-2
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
-                                    <input type="checkbox" class="zone-checkbox" value="Zone-2" checked> Zone-2
+                                    <input type="checkbox" class="zone-checkbox" value="Cyprus-3" checked> Cyprus-3
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
-                                    <input type="checkbox" class="zone-checkbox" value="Zone-3" checked> Zone-3
+                                    <input type="checkbox" class="zone-checkbox" value="Paxos-1" checked> Paxos-1
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
+                                    <input type="checkbox" class="zone-checkbox" value="Paxos-2" checked> Paxos-2
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
+                                    <input type="checkbox" class="zone-checkbox" value="Paxos-3" checked> Paxos-3
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
+                                    <input type="checkbox" class="zone-checkbox" value="Hydra-1" checked> Hydra-1
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
+                                    <input type="checkbox" class="zone-checkbox" value="Hydra-2" checked> Hydra-2
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 0.25rem; cursor: pointer;">
+                                    <input type="checkbox" class="zone-checkbox" value="Hydra-3" checked> Hydra-3
                                 </label>
                             </div>
                         </div>

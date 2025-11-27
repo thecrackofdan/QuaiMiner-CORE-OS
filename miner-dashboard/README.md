@@ -10,7 +10,7 @@
 
 - **🎨 Beautiful Design**: Modern, intuitive interface that's a joy to use
 - **⚡ Easiest Setup**: Get mining in under 5 minutes
-- **🏊 Best Pool**: Join our DePool for lowest fees and fastest payouts
+- **🏠 Solo Mining**: Mine directly to your own Quai node - 100% of rewards, no fees
 - **💎 Quai & Qi Optimized**: Built specifically for Quai Network multi-chain mining
 - **🔄 Auto-Optimization**: Automatically switches between chains for maximum profit
 - **💰 Merged Mining**: Mine multiple chains simultaneously
@@ -21,14 +21,13 @@
 
 - **🎨 Beautiful Dashboard**: The most beautiful mining interface you'll ever use
 - **⚡ One-Click Mining**: Start mining with a single click
-- **🏊 DePool Management**: Complete pool control or connect to our best pool
-- **Pool Statistics**: Real-time pool statistics (total miners, hash rate, blocks found, revenue, fees)
-- **Miner Management**: View all connected miners, their hash rates, shares, pending balances
-- **Automated Payouts**: Automatic payout calculation and processing (PPS model)
-- **Fee Management**: Configurable pool fees with profitability optimization
-- **Profitability Analysis**: Track revenue, costs, profit margins, and projections
-- **Share Tracking**: Track all submitted shares (accepted/rejected) in real-time
-- **Block Recording**: Record and display blocks found by pool miners
+- **🏠 Solo Mining**: Connect your miner to your own Quai node's stratum proxy
+- **📊 Real-Time Monitoring**: Hash rate, shares, temperature, power usage
+- **💰 Profitability Tracking**: Real-time profit calculations and projections
+- **🔧 GPU Management**: Individual GPU metrics and health monitoring
+- **📈 Historical Data**: Track performance over time with charts
+- **🎯 Auto Chain Switching**: Automatically mines the most profitable chain
+- **⚙️ Node Integration**: Connect to your Quai node's RPC for network stats
 - **Real-time Mining Statistics**: Hash rate, shares, temperature monitoring
 - **GPU Performance Tracking**: Individual GPU metrics and health monitoring
 - **Quai & Qi Native**: Auto-switching between chains, merged mining support
@@ -40,10 +39,26 @@
 
 ### Prerequisites
 
-- Node.js 14+ and npm
-- Linux terminal
-- Quai Network node running (for DePool operation)
-- Stratum proxy enabled on your node (usually port 3333)
+- Node.js 14+ and npm (18+ recommended)
+- Linux terminal (or WSL2 on Windows)
+- **Quai Network node running** with stratum proxy enabled (usually port 3333)
+- **Your miner** (quai-gpu-miner or compatible) configured to connect to your node's stratum proxy
+
+### 🐧 WSL2 Users (Windows - Testing Only)
+
+**Note:** WSL is for **testing only**. Production miners run on **native Linux systems**.
+
+For WSL testing, see [WSL_SETUP.md](WSL_SETUP.md).
+
+### 🚀 Production Linux Deployment
+
+For production deployment on native Linux systems, see [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md).
+
+Quick production install:
+```bash
+sudo bash install-production.sh
+sudo systemctl start quaiminer-dashboard
+```
 
 ### Installation
 
@@ -91,10 +106,11 @@ Then open http://localhost:3000 in your browser.
 
 Edit `public/js/config.js` to configure:
 
-- **Node RPC URL**: Default `http://localhost:8545`
-- **Mining API**: Enable/disable and set URL
+- **Node RPC URL**: Your Quai node's RPC endpoint (default `http://localhost:8545`)
+- **Stratum Proxy URL**: Your node's stratum proxy (default `stratum://localhost:3333`)
+- **Mining API**: Enable/disable and set URL (if your miner has an API)
 - **GPU Configuration**: Add your GPU details
-- **Network Settings**: Chain selection, mining mode
+- **Network Settings**: Chain selection, mining mode (solo)
 - **Update Intervals**: Data refresh rates
 
 ### Example Configuration
@@ -102,8 +118,14 @@ Edit `public/js/config.js` to configure:
 ```javascript
 api: {
     enabled: true,
-    url: 'http://192.168.2.110:8545',
-    updateInterval: 5000
+    url: 'http://192.168.2.110:8545',  // Your Quai node's RPC
+    updateInterval: 5000,
+    stratum: {
+        enabled: true,
+        url: 'stratum://192.168.2.110:3333',  // Your node's stratum proxy
+        host: '192.168.2.110',
+        port: 3333
+    }
 },
 gpus: [
     {
@@ -115,25 +137,26 @@ gpus: [
     }
 ],
 node: {
-    rpcUrl: 'http://localhost:8545',
+    rpcUrl: 'http://localhost:8545',  // Your Quai node's RPC
     enableMetrics: true
 },
-depool: {
-    enabled: true,
-    fee: 1.0,              // Pool fee percentage (0-5%)
-    minPayout: 0.1,       // Minimum payout in QUAI
-    payoutInterval: 86400000  // Payout interval in milliseconds (24 hours)
+mining: {
+    mode: 'solo'  // Solo mining to your own node
 }
 ```
 
-### DePool Setup
+### Solo Mining Setup
 
-1. **Enable DePool**: Open dashboard → Click "🏊 DePool Manager" → Toggle "Enable DePool"
-2. **Configure Settings**: Set pool fee, minimum payout, and payout interval
-3. **Share Stratum Endpoint**: Share `stratum://YOUR_NODE_IP:3333` with miners
-4. **Monitor**: View pool statistics, connected miners, and profitability in real-time
+1. **Run Your Quai Node**: Ensure your Quai node is running with stratum proxy enabled
+2. **Configure Stratum Proxy**: Set the stratum URL in config.js (usually `stratum://YOUR_NODE_IP:3333`)
+3. **Connect Your Miner**: Configure your miner (quai-gpu-miner) to connect to the stratum proxy
+4. **Monitor**: Use this dashboard to monitor your solo mining operation
 
-For complete DePool documentation, see [DePool System Guide](../docs/DEPOOL_SYSTEM.md).
+**Benefits of Solo Mining**:
+- 100% of block rewards (no pool fees)
+- Full control over your mining operation
+- Supports network decentralization
+- Direct connection to your node
 
 ## Server Endpoints
 

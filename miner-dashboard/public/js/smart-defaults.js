@@ -11,14 +11,44 @@ class SmartDefaults {
 
     /**
      * Load hardware-specific profiles
+     * Now uses GPUOptimizationProfiles for energy & profit efficient defaults
      */
     loadHardwareProfiles() {
+        // Use GPUOptimizationProfiles if available
+        if (typeof GPUOptimizationProfiles !== 'undefined') {
+            const profiles = new GPUOptimizationProfiles();
+            const profileMap = {};
+            
+            // Convert profiles to the format expected by SmartDefaults
+            Object.keys(profiles.profiles).forEach(key => {
+                const profile = profiles.profiles[key];
+                const matchKey = key.replace('amd-', '').replace('nvidia-', '');
+                profileMap[matchKey] = {
+                    coreClock: profile.coreClock,
+                    memoryClock: profile.memoryClock,
+                    powerLimit: profile.powerLimit,
+                    fanSpeed: profile.fanSpeed,
+                    intensity: profile.intensity,
+                    worksize: profile.worksize,
+                    expectedHashRate: profile.expectedHashRate,
+                    expectedPower: profile.expectedPower,
+                    efficiency: profile.efficiency,
+                    profitability: profile.profitability,
+                    targetTemp: profile.targetTemp,
+                    maxTemp: profile.maxTemp
+                };
+            });
+            
+            return profileMap;
+        }
+        
+        // Fallback to original profiles
         return {
             // AMD Profiles
             'amd-rx-590': {
-                coreClock: 1545,
-                memoryClock: 2000,
-                powerLimit: -20,
+                coreClock: 1215,  // Updated to energy efficient
+                memoryClock: 1900, // Updated to energy efficient
+                powerLimit: -25,   // Updated to energy efficient
                 fanSpeed: 60,
                 intensity: 20,
                 worksize: 256
@@ -127,8 +157,36 @@ class SmartDefaults {
 
     /**
      * Get optimal settings for GPU
+     * Uses GPUOptimizationProfiles for energy & profit efficient defaults
      */
     getOptimalGPUSettings(gpuName, vendor) {
+        // Use GPUOptimizationProfiles if available
+        if (typeof GPUOptimizationProfiles !== 'undefined') {
+            const profiles = new GPUOptimizationProfiles();
+            const profile = profiles.getProfile(gpuName, vendor);
+            if (profile) {
+                return {
+                    coreClock: profile.coreClock,
+                    memoryClock: profile.memoryClock,
+                    powerLimit: profile.powerLimit,
+                    fanSpeed: profile.fanSpeed,
+                    intensity: profile.intensity,
+                    worksize: profile.worksize,
+                    voltage: profile.voltage,
+                    expectedHashRate: profile.expectedHashRate,
+                    expectedPower: profile.expectedPower,
+                    efficiency: profile.efficiency,
+                    profitability: profile.profitability,
+                    targetTemp: profile.targetTemp,
+                    maxTemp: profile.maxTemp
+                };
+            }
+            
+            // Fallback to vendor defaults
+            return profiles.getDefaultSettings(vendor);
+        }
+
+        // Original fallback
         const key = this.matchHardwareProfile(gpuName, vendor);
         if (key && this.hardwareProfiles[key]) {
             return this.hardwareProfiles[key];

@@ -137,7 +137,7 @@ class UIImprovements {
                             try {
                                 await fetch(`/api/gpus/${gpu.id}/reset`, { method: 'POST' });
                             } catch (error) {
-                                console.error('Error resetting GPU:', error);
+                                if (window.logger) window.logger.error('Error resetting GPU', error);
                             }
                         }
                         if (typeof Toast !== 'undefined') {

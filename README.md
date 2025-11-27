@@ -30,7 +30,8 @@ That's it! This single command will:
 
 2. **Configure your miner:**
    - Enter your wallet address
-   - Select a mining pool
+   - Set your Quai node's stratum proxy URL (usually `stratum://localhost:3333`)
+   - Set your node's RPC URL (usually `http://localhost:8545`)
    - Click "Start Mining"
 
 3. **Enable auto-start (optional):**

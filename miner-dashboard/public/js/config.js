@@ -11,17 +11,19 @@ CONFIG = {
         currency: 'QUAI',
         algorithm: 'ProgPoW',
         networkType: 'mainnet', // 'mainnet' or 'testnet'
-        // Quai Network chain hierarchy:
+        // Quai Network chain hierarchy (Official Structure):
         // - Prime Chain (Level 0): Main coordination chain
-        // - Regions (Level 1): Multiple regions (typically 3)
-        // - Zones (Level 2): Multiple zones per region (typically 3 per region)
+        // - Regions (Level 1): Cyprus, Paxos, Hydra
+        // - Zones (Level 2): Multiple zones per region (Cyprus-1, Cyprus-2, Cyprus-3, etc.)
+        // Reference: https://docs.v2.qu.ai/docs/learn/advanced-introduction/architecture
         // For merged mining, you can mine multiple chains simultaneously
         chains: [
             { id: 0, name: 'Prime', enabled: true, level: 0 },
-            { id: 1, name: 'Region 1', enabled: false, level: 1 },
-            { id: 2, name: 'Region 2', enabled: false, level: 1 },
-            { id: 3, name: 'Region 3', enabled: false, level: 1 }
-            // Note: Zones are typically accessed through their parent Region
+            { id: 1, name: 'Cyprus', enabled: false, level: 1 },
+            { id: 2, name: 'Paxos', enabled: false, level: 1 },
+            { id: 3, name: 'Hydra', enabled: false, level: 1 }
+            // Zones: Cyprus-1, Cyprus-2, Cyprus-3, Paxos-1, Paxos-2, Paxos-3, Hydra-1, Hydra-2, Hydra-3
+            // Reference: https://docs.v2.qu.ai/docs/learn/advanced-introduction/architecture
         ]
     },
 
@@ -62,20 +64,19 @@ CONFIG = {
         // For Team Red Miner or other miners with API
         // url: 'http://localhost:4028/api', // Team Red Miner default API
         updateInterval: 5000, // API polling interval (ms)
-        // Stratum proxy configuration (if using stratum/pool)
-        // For testnet: Check TESTNET_POOLS.md for available testnet pools
-        // For mainnet: See Quai Network docs for pool options
-        // Format: stratum://POOL_HOST:PORT or stratum://POOL_HOST:PORT/WALLET_ADDRESS
+        // Stratum proxy configuration (for solo mining with your own node)
+        // Your Quai node's stratum proxy - this is where your miner connects
+        // Format: stratum://YOUR_NODE_IP:PORT
+        // Default: stratum://localhost:3333 (if node is on same machine)
         stratum: {
             enabled: true,
-            url: 'stratum://192.168.2.110:3333', // Your local stratum proxy or pool URL
-            host: '192.168.2.110',
-            port: 3333,
-            // Testnet pool example (if available):
-            // url: 'stratum://testnet-pool.example.com:3333',
-            // Mainnet pool examples:
-            // url: 'stratum://quai.herominers.com:3333',
-            // url: 'stratum://pool.alphapool.tech:3333',
+            url: 'stratum://192.168.2.110:3333', // Your Quai node's stratum proxy URL
+            host: '192.168.2.110',  // Your node's IP address
+            port: 3333,  // Stratum proxy port (usually 3333)
+            // Example configurations:
+            // Local node: 'stratum://localhost:3333'
+            // Remote node: 'stratum://192.168.1.100:3333'
+            // Note: This is for SOLO MINING - connecting your miner to YOUR node
         }
     },
 
@@ -251,17 +252,19 @@ CONFIG = {
     // QuaiScan Integration
     // Official Documentation: https://docs.quaiscan.io
     // API Reference: https://docs.quaiscan.io/developer-support/api
-    // Repository: Check QuaiScan documentation for latest API endpoints
+    // Repository: https://github.com/dominant-strategies/quai-docs (check for latest)
     quaiscan: {
         enabled: true,
         // QuaiScan API base URL
         // Official API documentation: https://docs.quaiscan.io/developer-support/api
-        apiUrl: 'https://api.quaiscan.io/api', // Mainnet - verify at docs.quaiscan.io
+        // NOTE: Verify actual endpoints at docs.quaiscan.io - endpoints may vary
+        apiUrl: 'https://api.quaiscan.io/api', // Mainnet - VERIFY at docs.quaiscan.io
         // Alternative URLs for different networks (verify in QuaiScan docs):
         // apiUrl: 'https://api-testnet.quaiscan.io/api', // Testnet (if available)
         // apiUrl: 'https://api-devnet.quaiscan.io/api', // Devnet (if available)
         // GraphQL API: https://docs.quaiscan.io/developer-support/api/graphql
-        graphqlUrl: 'https://api.quaiscan.io/graphql', // GraphQL endpoint (if available)
+        // NOTE: GraphQL endpoint may not be available - verify in QuaiScan docs
+        graphqlUrl: 'https://api.quaiscan.io/graphql', // GraphQL endpoint - VERIFY availability
         // Update interval for QuaiScan data (ms)
         updateInterval: 30000, // 30 seconds
         // Features to enable

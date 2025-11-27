@@ -6,17 +6,13 @@ Quai GPU Miner is a complete mining management system designed for easy Quai Net
 
 ## 🎯 What It Does
 
-- ✅ **DePool Operation**: Transform your node into a decentralized mining pool
+- ✅ **Solo Mining**: Mine directly to your own Quai node - 100% of rewards, no fees
 - ✅ **Automated Miner Installation**: Installs and configures quai-gpu-miner automatically
-- ✅ **Miner Management**: Automatically register and track connected miners
-- ✅ **Share Tracking**: Track all submitted shares (accepted/rejected) in real-time
-- ✅ **Automated Payouts**: Calculate and process miner payouts automatically (PPS model)
-- ✅ **Fee Management**: Configurable pool fees with profitability optimization
-- ✅ **Stratum Integration**: Full stratum protocol support for miner connections
+- ✅ **Stratum Proxy Integration**: Connect your miner to your node's stratum proxy
 - ✅ **Auto-Start Mining**: Automatically starts mining on boot
-- ✅ **Remote Management**: Control your DePool from anywhere via web dashboard
-- ✅ **Real-Time Monitoring**: Monitor pool statistics, miner performance, and profitability
-- ✅ **Multi-Rig Support**: Manage multiple mining rigs connected to your DePool
+- ✅ **Remote Management**: Control your miner from anywhere via web dashboard
+- ✅ **Real-Time Monitoring**: Monitor mining performance, GPU stats, and profitability
+- ✅ **Multi-Rig Support**: Manage multiple solo mining rigs
 
 ## 🚀 Quick Start
 
@@ -33,20 +29,18 @@ Quai GPU Miner is a complete mining management system designed for easy Quai Net
    sudo ./install.sh
    ```
 
-3. **Enable and Configure DePool**
+3. **Configure Solo Mining**
    - Ensure your Quai node is running and synced
    - Start your node's stratum proxy (usually on localhost:3333)
    - Open dashboard: `http://localhost:3000`
-   - Navigate to "🏊 DePool Manager"
-   - Toggle "Enable DePool" switch
-   - Configure pool settings:
-     - **Pool Fee**: 0.5-2.0% (recommended)
-     - **Minimum Payout**: 0.1 QUAI (recommended)
-     - **Payout Interval**: 24 hours (recommended)
+   - Configure your miner:
+     - **Stratum Address**: `stratum://localhost:3333` (or your node's IP)
+     - **Wallet Address**: Your Quai wallet address
+     - **Node RPC**: `http://localhost:8545` (your node's RPC endpoint)
    - Click "Save Configuration"
-   - Share your stratum endpoint with miners: `stratum://YOUR_NODE_IP:3333`
+   - Start mining!
 
-That's it! Your DePool is now operational. Miners can connect and start mining, and payouts will be processed automatically.
+That's it! You're now solo mining directly to your own node. All block rewards go to your wallet with no pool fees.
 
 ## 📋 Components
 
@@ -63,13 +57,13 @@ That's it! Your DePool is now operational. Miners can connect and start mining, 
 - Logs to systemd journal
 
 ### 3. Configuration Manager (`config-manager.sh`)
-- Manages pool/stratum configuration
+- Manages stratum proxy configuration
 - Updates miner config files
 - Validates connection strings
 - Restarts miner when config changes
 
 ### 4. Web Dashboard Integration
-- Pool/stratum configuration interface
+- Stratum proxy configuration interface
 - Start/stop/restart miner controls
 - Real-time status monitoring
 - Configuration history
@@ -79,7 +73,6 @@ That's it! Your DePool is now operational. Miners can connect and start mining, 
 - `/api/miner/stop` - Stop mining
 - `/api/miner/status` - Get miner status
 - `/api/miner/config` - Get/set configuration
-- `/api/pools/list` - List configured pools
 
 ## 🎮 AMD RX 590 Support
 
@@ -114,36 +107,36 @@ See `/etc/quaiminer/rx590-optimization.md` for detailed tuning guide.
 
 ## 🔧 Configuration
 
-### DePool Configuration
+### Solo Mining Configuration
 
-**DePool Operation:**
+**Solo Mining Setup:**
 ```
-# Enable DePool mode in dashboard
-1. Open dashboard → "🏊 DePool Manager"
-2. Toggle "Enable DePool"
-3. Configure pool settings:
-   - Pool Fee: 0.5-2.0% (recommended)
-   - Minimum Payout: 0.1 QUAI
-   - Payout Interval: 24 hours
-4. Save configuration
+# Configure your miner to connect to your node's stratum proxy
+1. Open dashboard → Settings → Miner Configuration
+2. Set Stratum Address: stratum://localhost:3333 (or your node's IP)
+3. Set Wallet Address: Your Quai wallet address
+4. Set Node RPC: http://localhost:8545 (your node's RPC)
+5. Save configuration
+6. Start mining!
 
-# Share stratum endpoint with miners
-stratum://YOUR_NODE_IP:3333
-stratum://pool.yourdomain.com:3333
+# Your miner connects directly to your node
+stratum://localhost:3333          # Local node
+stratum://192.168.1.100:3333      # Remote node
 ```
 
 **Stratum Proxy Configuration:**
 ```
-# Local node (for DePool operation)
+# Your Quai node's stratum proxy (usually port 3333)
+# Local node:
 stratum://localhost:3333
 stratum://127.0.0.1:3333
 
-# Remote node (if node is on another machine)
+# Remote node (if node is on another machine):
 stratum://192.168.1.100:3333
 stratum://your-node-ip:3333
 ```
 
-**Note:** This system is designed for DePool operation. Your Quai node's stratum proxy accepts miner connections and the DePool system manages payouts, fees, and statistics.
+**Note:** This system is designed for solo mining. Your miner connects directly to your Quai node's stratum proxy, and all block rewards go to your wallet with no pool fees.
 
 ### Environment Variables
 
@@ -161,17 +154,16 @@ These are automatically set when RX 590 is detected. See `/etc/quaiminer/environ
 
 ## 📊 Dashboard Features
 
-- **DePool Management**: Complete DePool control panel with enable/disable toggle
-- **Pool Statistics**: Real-time pool statistics (miners, hash rate, blocks found, revenue)
-- **Miner Management**: View all connected miners, their hash rates, shares, and pending balances
-- **Payout Processing**: Automated payout calculation and processing
-- **Profitability Analysis**: Track pool operator revenue, costs, and profit margins
-- **Fee Optimization**: AI-powered fee optimization for maximum profitability
-- **Mining Status**: Real-time hashrate, shares, temperature for your own mining rigs
-- **Node Integration**: Connect to your own Quai node's stratum proxy
+- **Solo Mining Configuration**: Configure your miner to connect to your node's stratum proxy
+- **Real-Time Monitoring**: Hash rate, shares, temperature, power usage
+- **Profitability Tracking**: Track your mining profitability with real-time calculations
+- **GPU Management**: Individual GPU metrics and health monitoring
+- **Node Integration**: Connect to your own Quai node's RPC and stratum proxy
 - **Miner Controls**: Start, stop, restart with one click
 - **Logs Viewer**: View miner output in real-time
-- **Multi-Rig Management**: Manage multiple miners connected to your DePool
+- **Multi-Rig Management**: Manage multiple solo mining rigs
+- **Historical Data**: Track performance over time with charts
+- **Auto Chain Switching**: Automatically mines the most profitable Quai chain
 
 ## 🔄 Auto-Start on Boot
 
@@ -208,16 +200,17 @@ sudo journalctl -u quaiminer -f
 cat /etc/quaiminer/config.json
 ```
 
-### Pool Connection Issues
-- Verify pool/stratum address format
-- Check network connectivity
-- Verify firewall rules
+### Stratum Connection Issues
+- Verify stratum address format (stratum://host:port)
+- Check network connectivity to your node
+- Verify firewall rules (port 3333)
 - Check miner logs for connection errors
+- Ensure your Quai node's stratum proxy is running
 
 ## 📝 Next Steps
 
 1. Install QuaiMiner OS
-2. Configure your pool/stratum address
+2. Configure your stratum address (your node's stratum proxy)
 3. Start mining
 4. Monitor via dashboard
 

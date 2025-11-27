@@ -74,8 +74,17 @@ class DifficultyTracker {
             
             // Fetch Zone difficulties (example zones)
             // Note: Actual zone names depend on Quai network configuration
-            await this.fetchDifficulty('Zone-0');
-            await this.fetchDifficulty('Zone-1');
+            // Official Quai Network zones
+            // Reference: https://docs.v2.qu.ai/docs/learn/advanced-introduction/architecture
+            await this.fetchDifficulty('Cyprus-1');
+            await this.fetchDifficulty('Cyprus-2');
+            await this.fetchDifficulty('Cyprus-3');
+            await this.fetchDifficulty('Paxos-1');
+            await this.fetchDifficulty('Paxos-2');
+            await this.fetchDifficulty('Paxos-3');
+            await this.fetchDifficulty('Hydra-1');
+            await this.fetchDifficulty('Hydra-2');
+            await this.fetchDifficulty('Hydra-3');
             
             // Record in history
             this.recordHistory();

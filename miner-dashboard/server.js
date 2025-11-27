@@ -5,21 +5,21 @@
  * 
  * ARCHITECTURE OVERVIEW:
  * 
- * This server provides TWO distinct sets of functionality:
+ * SOLO MINER DASHBOARD - For miners running their own Quai node
  * 
- * 1. SOLO MINER CLIENT FUNCTIONALITY
- *    - Endpoints for solo miners to configure their mining software
- *    - Connect to a pool via stratum protocol
+ * This server provides functionality for solo miners who:
+ *    - Run their own Quai Network node
+ *    - Use their node's stratum proxy to connect their miner
+ *    - Mine directly to their own node (100% of rewards, no fees)
+ *    - Monitor mining status, GPU performance, and earnings
  *    - Configure wallet addresses (PRIVACY: Wallet addresses are validated and masked in logs)
- *    - Monitor mining status, GPU performance, earnings
  *    - Configure GPU settings and mining parameters
  *    - Endpoints: /api/miner/*, /api/stats, /api/config (mining config)
  * 
- * 2. POOL OPERATOR FUNCTIONALITY (DePool Management)
- *    - Endpoints for pool operators to manage their DePool
- *    - Track miners, shares, blocks, and process payouts
- *    - Manage pool configuration, fees, and statistics
- *    - Endpoints: /api/depool/*
+ * SETUP:
+ *    1. Run your Quai node with stratum proxy enabled (usually port 3333)
+ *    2. Configure miner to connect to: stratum://YOUR_NODE_IP:3333
+ *    3. Use this dashboard to monitor and control your solo mining operation
  * 
  * SECURITY & PRIVACY:
  * - All wallet addresses are validated and masked in logs
@@ -48,6 +48,7 @@ const { getAlertManager } = require('./utils/alerts');
 const DifficultyTracker = require('./utils/difficulty-tracker');
 const AutoChainSwitcher = require('./utils/auto-chain-switcher');
 const QuaiMetrics = require('./utils/quai-metrics');
+const WebSocketServer = require('./utils/websocket-server');
 
 // Initialize alert manager
 const alertManager = getAlertManager();
@@ -55,7 +56,13 @@ const { authenticate, optionalAuth, createDefaultUser, hashPassword, verifyPassw
 const { securityHeaders, sanitizeLogData, preventDirectoryTraversal, sanitizeFilePath } = require('./middleware/security');
 const { privacyHeaders, sanitizeResponse, maskWalletAddress, containsSensitiveData } = require('./middleware/privacy');
 const { sanitizeObject, sanitizeString, validateWalletAddress, validateUrl, validateNumber, validateInteger, validateMiningConfig, validateGPUSettings } = require('./middleware/inputValidation');
-const logger = require('./utils/logger');
+// Use Winston logger if available, fallback to basic logger
+let logger;
+try {
+    logger = require('./utils/winston-logger');
+} catch (error) {
+    logger = require('./utils/logger');
+}
 
 // Cross-platform fetch support
 // Node.js 18+ has built-in fetch, older versions need node-fetch
@@ -216,12 +223,90 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Swagger/OpenAPI documentation (optional - only if dependencies are installed)
+try {
+    const swaggerSpec = require('./utils/swagger');
+    const swaggerUi = require('swagger-ui-express');
+    
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'Quai Miner Dashboard API'
+    }));
+    logger.info('Swagger API documentation available at /api-docs');
+} catch (error) {
+    logger.warn('Swagger not available. Install swagger-jsdoc and swagger-ui-express for API docs');
+}
+
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Server is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ */
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
         uptime: process.uptime()
+    });
+});
+
+/**
+ * @swagger
+ * /api/metrics:
+ *   get:
+ *     summary: Performance metrics endpoint
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Performance metrics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 memory:
+ *                   type: object
+ *                   properties:
+ *                     used: { type: 'number' }
+ *                     total: { type: 'number' }
+ *                     percentage: { type: 'number' }
+ *                 cpu:
+ *                   type: object
+ *                   properties:
+ *                     usage: { type: 'number' }
+ *                 uptime: { type: 'number' }
+ *                 requests: { type: 'object' }
+ */
+// Performance metrics endpoint
+app.get('/api/metrics', (req, res) => {
+    const memUsage = process.memoryUsage();
+    const totalMem = memUsage.heapTotal;
+    const usedMem = memUsage.heapUsed;
+    
+    res.json({
+        memory: {
+            used: Math.round(usedMem / 1024 / 1024), // MB
+            total: Math.round(totalMem / 1024 / 1024), // MB
+            percentage: Math.round((usedMem / totalMem) * 100)
+        },
+        cpu: {
+            usage: process.cpuUsage()
+        },
+        uptime: process.uptime(),
+        requests: {
+            // Could add request counters here
+        },
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -325,6 +410,39 @@ app.post('/api/errors', optionalAuth, async (req, res) => {
     }
 });
 
+// Client-side logging endpoint (for structured logging from browser)
+app.post('/api/logs', optionalAuth, async (req, res) => {
+    try {
+        // SECURITY: Sanitize log data
+        const { timestamp, level, message, data } = sanitizeObject(req.body);
+        
+        // Log based on level
+        const logData = { message, data, timestamp, userAgent: req.headers['user-agent'] };
+        
+        switch (level) {
+            case 'debug':
+                logger.debug(`[Client] ${message}`, data);
+                break;
+            case 'info':
+                logger.info(`[Client] ${message}`, data);
+                break;
+            case 'warn':
+                logger.warn(`[Client] ${message}`, data);
+                break;
+            case 'error':
+                logger.error(`[Client] ${message}`, data);
+                break;
+            default:
+                logger.info(`[Client] ${message}`, data);
+        }
+        
+        res.json({ success: true });
+    } catch (error) {
+        // Don't log errors from logging endpoint to avoid infinite loops
+        res.status(500).json({ success: false, error: 'Failed to log' });
+    }
+});
+
 // SOLO MINER CLIENT: Main mining stats endpoint (for Quai GPU Miner, Team Red Miner, etc.)
 // This endpoint is used by solo miners to monitor their mining status
 app.get('/api/stats', async (req, res) => {
@@ -373,7 +491,7 @@ app.get('/api/stats', async (req, res) => {
         }
         
         // Fallback to mock data if miner API is not configured or unavailable
-        res.json({
+        const stats = {
             hashRate: 10.5,
             shares: {
                 accepted: 123,
@@ -399,7 +517,39 @@ app.get('/api/stats', async (req, res) => {
                 blockHeight: 1234567,
                 difficulty: 1234567890
             }
-        });
+        };
+        
+        // Calculate daily profit for WebSocket broadcast
+        const hashRate = stats.hashRate || 0;
+        const powerUsage = stats.powerUsage || 0;
+        let dailyProfit = 0;
+        
+        if (hashRate > 0 && powerUsage > 0) {
+            // Simple profit calculation (can be enhanced)
+            const dailyQuai = (hashRate / 100) * 0.01; // Rough estimate
+            const quaiPrice = 0.01; // Default price
+            const electricityRate = 0.10; // Default rate
+            const dailyRevenue = dailyQuai * quaiPrice;
+            const dailyCost = (powerUsage / 1000) * 24 * electricityRate;
+            dailyProfit = dailyRevenue - dailyCost;
+        }
+        
+        // Broadcast via WebSocket if available
+        if (req.app.locals.wsServer) {
+            req.app.locals.updateMiningData({
+                miningData: {
+                    hashRate: stats.hashRate || 0,
+                    acceptedShares: stats.shares?.accepted || 0,
+                    rejectedShares: stats.shares?.rejected || 0,
+                    powerUsage: stats.powerUsage || 0,
+                    isMining: stats.isMining || false
+                },
+                profit: dailyProfit,
+                hashRate: stats.hashRate || 0
+            });
+        }
+        
+        res.json(stats);
     } catch (error) {
         logger.error('Error in /api/stats', error);
         res.status(500).json({ error: 'Failed to fetch mining stats', message: NODE_ENV === 'development' ? error.message : 'An error occurred' });
@@ -620,7 +770,7 @@ app.get('/api/gpus', async (req, res) => {
             res.json({ success: false, error: 'GPU API not available', gpus: [] });
         }
     } catch (error) {
-        console.error('Error getting GPUs:', error);
+        logger.error('Error getting GPUs', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -630,7 +780,7 @@ app.get('/api/miner/status', async (req, res) => {
         const status = await minerAPI.getMinerStatus();
         res.json(status);
     } catch (error) {
-        console.error('Error getting miner status:', error);
+        logger.error('Error getting miner status', error);
         res.status(500).json({ error: 'Failed to get miner status', message: error.message });
     }
 });
@@ -642,7 +792,7 @@ app.post('/api/miner/start', async (req, res) => {
         const result = await minerAPI.startMiner(gpuIndices);
         res.json(result);
     } catch (error) {
-        console.error('Error starting miner:', error);
+        logger.error('Error starting miner', { error: error.message });
         res.status(500).json({ error: 'Failed to start miner', message: error.message });
     }
 });
@@ -654,7 +804,7 @@ app.post('/api/miner/stop', async (req, res) => {
         const result = await minerAPI.stopMiner(gpuIndex);
         res.json(result);
     } catch (error) {
-        console.error('Error stopping miner:', error);
+        logger.error('Error stopping miner', { error: error.message });
         res.status(500).json({ error: 'Failed to stop miner', message: error.message });
     }
 });
@@ -664,7 +814,7 @@ app.post('/api/miner/restart', async (req, res) => {
         const result = await minerAPI.restartMiner();
         res.json(result);
     } catch (error) {
-        console.error('Error restarting miner:', error);
+        logger.error('Error restarting miner', { error: error.message });
         res.status(500).json({ error: 'Failed to restart miner', message: error.message });
     }
 });
@@ -674,7 +824,7 @@ app.get('/api/miner/config', async (req, res) => {
         const result = await minerAPI.getConfig();
         res.json(result);
     } catch (error) {
-        console.error('Error getting miner config:', error);
+        logger.error('Error getting miner config', { error: error.message });
         res.status(500).json({ error: 'Failed to get miner config', message: error.message });
     }
 });
@@ -776,13 +926,13 @@ app.post('/api/miner/config', optionalAuth, async (req, res) => {
             
             // Write merged mining config file with secure permissions
             fs.writeFileSync(configFile, JSON.stringify(mergedMiningConfig, null, 2), { mode: 0o600 });
-            console.log('Merged mining config saved to:', configFile);
+            logger.info('Merged mining config saved', { configFile });
         }
         
         const result = await minerAPI.updateConfig(updates);
         res.json(result);
     } catch (error) {
-        console.error('Error updating miner config:', error);
+        logger.error('Error updating miner config', { error: error.message });
         res.status(500).json({ error: 'Failed to update miner config', message: error.message });
     }
 });
@@ -794,76 +944,52 @@ app.get('/api/miner/logs', async (req, res) => {
         const result = await minerAPI.getMinerLogs(gpuIndex, lines);
         res.json(result);
     } catch (error) {
-        console.error('Error getting miner logs:', error);
+        logger.error('Error getting miner logs', { error: error.message });
         res.status(500).json({ error: 'Failed to get miner logs', message: error.message });
     }
 });
 
-// Pool Management Endpoints
+// Solo Mining Configuration Endpoint
+// Returns configuration for connecting miner to personal node's stratum proxy
 app.get('/api/pools', async (req, res) => {
     try {
-        const pools = [
-            {
-                id: 'solo',
-                name: 'Solo Mining (Your Node)',
-                url: 'stratum://localhost:3333',
-                fee: 0,
-                feePercent: '0%',
-                mining: 'Quai Network (All Chains)',
-                payout: 'When block found',
-                minPayout: 'Block reward',
-                uptime: '99.9%',
-                recommended: false,
-                description: 'Mine directly to your own Quai node. 100% of rewards, no fees.',
-                features: ['100% of rewards', 'No fees', 'Supports decentralization', 'Full control']
-            },
-            {
-                id: 'official',
-                name: 'Quai Network Official Pool',
-                url: 'stratum+tcp://pool.quai.network:3333',
-                fee: 0.5,
-                feePercent: '0.5%',
-                mining: 'Quai Network (Prime + All Zones)',
-                payout: 'Daily',
-                minPayout: '0.1 QUAI',
-                uptime: '99.9%',
-                recommended: true,
-                description: 'Official Quai Network mining pool. Low fees, reliable infrastructure.',
-                features: ['Lowest fee (0.5%)', 'Official support', 'High uptime', 'Fast payouts']
-            },
-            {
-                id: 'quaiminer',
-                name: 'QuaiMiner Pool',
-                url: 'stratum+tcp://pool.quaiminer.io:3333',
-                fee: 1.0,
-                feePercent: '1.0%',
-                mining: 'Quai Network (Prime + All Zones)',
-                payout: 'Daily',
-                minPayout: '0.05 QUAI',
-                uptime: '99.5%',
-                recommended: false,
-                description: 'Community-run mining pool with active support.',
-                features: ['Community support', 'Detailed statistics', 'Active development']
-            },
-            {
-                id: 'quaihash',
-                name: 'QuaiHash Pool',
-                url: 'stratum+tcp://pool.quaihash.com:3333',
-                fee: 1.5,
-                feePercent: '1.5%',
-                mining: 'Quai Network (Prime + All Zones)',
-                payout: 'Weekly',
-                minPayout: '0.2 QUAI',
-                uptime: '99.0%',
-                recommended: false,
-                description: 'Established mining pool with good uptime.',
-                features: ['Established pool', 'Good uptime', 'Regular payouts']
+        // Solo mining only - connect to your own node's stratum proxy
+        // Get stratum URL from config or use default
+        const stratumUrl = CONFIG?.api?.stratum?.url || 'stratum://localhost:3333';
+        const stratumHost = CONFIG?.api?.stratum?.host || 'localhost';
+        const stratumPort = CONFIG?.api?.stratum?.port || 3333;
+        
+        const soloConfig = {
+            id: 'solo',
+            name: 'Solo Mining (Your Node)',
+            url: stratumUrl,
+            host: stratumHost,
+            port: stratumPort,
+            fee: 0,
+            feePercent: '0%',
+            mining: 'Quai Network (All Chains)',
+            payout: 'When block found',
+            minPayout: 'Block reward',
+            uptime: '99.9%',
+            recommended: true,
+            description: 'Mine directly to your own Quai node via stratum proxy. 100% of rewards, no fees.',
+            features: ['100% of rewards', 'No fees', 'Supports decentralization', 'Full control', 'Your own node'],
+            setupInstructions: {
+                step1: 'Ensure your Quai node is running with stratum proxy enabled',
+                step2: `Configure miner to connect to: ${stratumUrl}`,
+                step3: 'Start mining and monitor via this dashboard',
+                step4: 'All block rewards go directly to your wallet'
             }
-        ];
-        res.json({ success: true, pools });
+        };
+        
+        res.json({ 
+            success: true, 
+            pools: [soloConfig],
+            message: 'Solo mining configuration - connect to your own node'
+        });
     } catch (error) {
-        console.error('Error getting pools:', error);
-        res.status(500).json({ error: 'Failed to get pools', message: error.message });
+        logger.error('Error getting pool config', error);
+        res.status(500).json({ error: 'Failed to get pool config', message: error.message });
     }
 });
 
@@ -883,7 +1009,7 @@ app.get('/api/pools/recommended', async (req, res) => {
         
         res.json({ success: true, recommended, hashRate });
     } catch (error) {
-        console.error('Error getting recommended pool:', error);
+        logger.error('Error getting recommended pool', { error: error.message });
         res.status(500).json({ error: 'Failed to get recommendation', message: error.message });
     }
 });
@@ -895,7 +1021,7 @@ app.get('/api/gpu/list', async (req, res) => {
         const gpus = await minerAPI.getGPUs();
         res.json({ success: true, gpus });
     } catch (error) {
-        console.error('Error getting GPU list:', error);
+        logger.error('Error getting GPU list', { error: error.message });
         res.status(500).json({ error: 'Failed to get GPUs', message: error.message });
     }
 });
@@ -1325,354 +1451,7 @@ app.post('/api/miner/switch-chain', optionalAuth, async (req, res) => {
     }
 });
 
-// DePool (Decentralized Pool) Endpoints
-// Transform your node into a mining pool
-
-// Get DePool configuration
-app.get('/api/depool/config', optionalAuth, async (req, res) => {
-    try {
-        const configStr = config.get('depool_config');
-        let depoolConfig = {
-            enabled: false,
-            fee: 1.0,
-            minPayout: 0.1,
-            payoutInterval: 86400000,
-            shareDifficulty: 1000000,
-            blockRewardShare: 0.99
-        };
-        
-        if (configStr) {
-            try {
-                depoolConfig = { ...depoolConfig, ...JSON.parse(configStr) };
-            } catch (e) {
-                // Use defaults
-            }
-        }
-        
-        res.json({ success: true, config: depoolConfig });
-    } catch (error) {
-        logger.error('Error getting DePool config', error);
-        res.status(500).json({ error: 'Failed to get DePool config', message: error.message });
-    }
-});
-
-// Save DePool configuration
-app.post('/api/depool/config', optionalAuth, async (req, res) => {
-    try {
-        const depoolConfig = sanitizeObject(req.body);
-        config.set('depool_config', JSON.stringify(depoolConfig));
-        res.json({ success: true });
-    } catch (error) {
-        logger.error('Error saving DePool config', error);
-        res.status(500).json({ error: 'Failed to save DePool config', message: error.message });
-    }
-});
-
-// Start DePool services
-app.post('/api/depool/start', optionalAuth, async (req, res) => {
-    try {
-        // Enable DePool mode in node configuration
-        // This would typically involve:
-        // 1. Enabling stratum proxy for external connections
-        // 2. Starting pool management services
-        // 3. Setting up miner tracking
-        
-        const depoolConfigStr = config.get('depool_config');
-        let depoolConfig = {};
-        if (depoolConfigStr) {
-            depoolConfig = JSON.parse(depoolConfigStr);
-        }
-        
-        depoolConfig.enabled = true;
-        config.set('depool_config', JSON.stringify(depoolConfig));
-        
-        logger.info('DePool services started');
-        
-        res.json({ success: true, message: 'DePool services started' });
-    } catch (error) {
-        logger.error('Error starting DePool services', error);
-        res.status(500).json({ error: 'Failed to start DePool services', message: error.message });
-    }
-});
-
-// Stop DePool services
-app.post('/api/depool/stop', optionalAuth, async (req, res) => {
-    try {
-        const depoolConfigStr = config.get('depool_config');
-        let depoolConfig = {};
-        if (depoolConfigStr) {
-            try {
-                depoolConfig = JSON.parse(depoolConfigStr);
-            } catch (parseError) {
-                logger.error('Error parsing DePool config', parseError);
-                depoolConfig = {}; // Use default empty config
-            }
-        }
-        
-        depoolConfig.enabled = false;
-        config.set('depool_config', JSON.stringify(depoolConfig));
-        
-        logger.info('DePool services stopped');
-        
-        res.json({ success: true, message: 'DePool services stopped' });
-    } catch (error) {
-        logger.error('Error stopping DePool services', error);
-        res.status(500).json({ error: 'Failed to stop DePool services', message: error.message });
-    }
-});
-
-// Get DePool statistics
-app.get('/api/depool/stats', optionalAuth, async (req, res) => {
-    try {
-        // Get miners from database
-        const minersStr = config.get('depool_miners') || '[]';
-        let miners = [];
-        try {
-            miners = JSON.parse(minersStr);
-        } catch (parseError) {
-            logger.error('Error parsing miners data', parseError);
-            miners = [];
-        }
-        
-        // Get shares from database
-        const sharesStr = config.get('depool_shares') || '[]';
-        let shares = [];
-        try {
-            shares = JSON.parse(sharesStr);
-        } catch (parseError) {
-            logger.error('Error parsing shares data', parseError);
-            shares = [];
-        }
-        
-        // Get blocks from database
-        const blocksStr = config.get('depool_blocks') || '[]';
-        let blocks = [];
-        try {
-            blocks = JSON.parse(blocksStr);
-        } catch (parseError) {
-            logger.error('Error parsing blocks data', parseError);
-            blocks = [];
-        }
-        
-        // Calculate statistics
-        const totalHashRate = miners.reduce((sum, m) => sum + (m.hashRate || 0), 0);
-        const totalRevenue = blocks.reduce((sum, b) => sum + (b.reward || 0), 0);
-        
-        const depoolConfigStr = config.get('depool_config');
-        let depoolConfig = { fee: 1.0 };
-        if (depoolConfigStr) {
-            try {
-                depoolConfig = JSON.parse(depoolConfigStr);
-            } catch (parseError) {
-                logger.error('Error parsing DePool config in stats', parseError);
-                depoolConfig = { fee: 1.0 }; // Use default
-            }
-        }
-        
-        const totalFees = totalRevenue * (depoolConfig.fee / 100);
-        
-        res.json({
-            success: true,
-            stats: {
-                totalMiners: miners.length,
-                totalHashRate: totalHashRate,
-                totalShares: shares.length,
-                acceptedShares: shares.filter(s => s.accepted).length,
-                rejectedShares: shares.filter(s => !s.accepted).length,
-                blocksFound: blocks.length,
-                totalRevenue: totalRevenue,
-                totalFees: totalFees,
-                miners: miners
-            }
-        });
-    } catch (error) {
-        logger.error('Error getting DePool stats', error);
-        res.status(500).json({ error: 'Failed to get DePool stats', message: error.message });
-    }
-});
-
-// ============================================================================
-// DEPOOL API ENDPOINTS - POOL OPERATOR FUNCTIONALITY
-// ============================================================================
-// NOTE: These endpoints are for pool operators managing their DePool.
-// Solo miners connect to the pool via stratum protocol, not these endpoints.
-// Solo miners use the standard mining configuration endpoints below.
-// ============================================================================
-
-// Register a miner (POOL OPERATOR ONLY - for tracking miners in the pool)
-app.post('/api/depool/miners', optionalAuth, async (req, res) => {
-    try {
-        const miner = sanitizeObject(req.body);
-        
-        // SECURITY: Validate miner data
-        if (!miner.walletAddress || !miner.id) {
-            return res.status(400).json({ error: 'walletAddress and id are required' });
-        }
-        
-        // SECURITY: Validate wallet address format
-        if (!validateWalletAddress(miner.walletAddress)) {
-            return res.status(400).json({ error: 'Invalid wallet address format' });
-        }
-        
-        // PRIVACY: Log with masked wallet address
-        logger.info('Miner registration', { 
-            minerId: miner.id, 
-            walletAddress: maskWalletAddress(miner.walletAddress) 
-        });
-        
-        // Get existing miners
-        const minersStr = config.get('depool_miners') || '[]';
-        const miners = JSON.parse(minersStr);
-        
-        // Check if miner already exists
-        const existingIndex = miners.findIndex(m => m.id === miner.id);
-        if (existingIndex >= 0) {
-            // Update existing miner
-            miners[existingIndex] = { ...miners[existingIndex], ...miner };
-        } else {
-            // Add new miner
-            miners.push(miner);
-        }
-        
-        // Save miners
-        config.set('depool_miners', JSON.stringify(miners));
-        
-        res.json({ success: true, miner: miner });
-    } catch (error) {
-        logger.error('Error registering miner', error);
-        res.status(500).json({ error: 'Failed to register miner', message: error.message });
-    }
-});
-
-// Submit a share (POOL OPERATOR ONLY - for tracking shares in the pool)
-app.post('/api/depool/shares', optionalAuth, async (req, res) => {
-    try {
-        const share = sanitizeObject(req.body);
-        
-        // SECURITY: Validate share data
-        if (!share.minerId || share.difficulty === undefined || share.accepted === undefined) {
-            return res.status(400).json({ error: 'minerId, difficulty, and accepted are required' });
-        }
-        
-        // SECURITY: Validate difficulty is a positive number
-        if (!validateNumber(share.difficulty, 0, Infinity)) {
-            return res.status(400).json({ error: 'Invalid difficulty value' });
-        }
-        
-        // Get existing shares
-        const sharesStr = config.get('depool_shares') || '[]';
-        const shares = JSON.parse(sharesStr);
-        
-        // Add new share with timestamp
-        shares.push({
-            ...share,
-            timestamp: new Date().toISOString()
-        });
-        
-        // PERFORMANCE: Keep only last 10000 shares to prevent memory bloat
-        if (shares.length > 10000) {
-            shares.shift();
-        }
-        
-        // Save shares
-        config.set('depool_shares', JSON.stringify(shares));
-        
-        res.json({ success: true });
-    } catch (error) {
-        logger.error('Error submitting share', error);
-        res.status(500).json({ error: 'Failed to submit share', message: error.message });
-    }
-});
-
-// Record a found block (POOL OPERATOR ONLY - for tracking blocks found by pool miners)
-app.post('/api/depool/blocks', blockLimiter, optionalAuth, async (req, res) => {
-    try {
-        const block = sanitizeObject(req.body);
-        
-        // SECURITY: Validate block data
-        if (!block.minerId || !block.reward || !block.chain) {
-            return res.status(400).json({ error: 'minerId, reward, and chain are required' });
-        }
-        
-        // SECURITY: Validate reward is a positive number
-        if (!validateNumber(block.reward, 0, Infinity)) {
-            return res.status(400).json({ error: 'Invalid reward value' });
-        }
-        
-        // Get existing blocks
-        const blocksStr = config.get('depool_blocks') || '[]';
-        const blocks = JSON.parse(blocksStr);
-        
-        // Add new block with timestamp
-        blocks.push({
-            ...block,
-            timestamp: new Date().toISOString()
-        });
-        
-        // PRIVACY: Log with masked miner ID
-        logger.info('Block recorded', { 
-            chain: block.chain, 
-            reward: block.reward,
-            minerId: maskWalletAddress(block.minerId)
-        });
-        
-        // Save blocks
-        config.set('depool_blocks', JSON.stringify(blocks));
-        
-        res.json({ success: true, block: block });
-    } catch (error) {
-        logger.error('Error recording block', error);
-        res.status(500).json({ error: 'Failed to record block', message: error.message });
-    }
-});
-
-// Process payouts
-app.post('/api/depool/payouts/process', optionalAuth, async (req, res) => {
-    try {
-        const { payouts } = sanitizeObject(req.body);
-        
-        if (!Array.isArray(payouts)) {
-            return res.status(400).json({ error: 'payouts must be an array' });
-        }
-        
-        // Get existing payouts
-        const payoutsStr = config.get('depool_payouts') || '[]';
-        const allPayouts = JSON.parse(payoutsStr);
-        
-        // Add new payouts
-        payouts.forEach(payout => {
-            payout.status = 'processed';
-            payout.processedAt = Date.now();
-            allPayouts.push(payout);
-        });
-        
-        // Save payouts
-        config.set('depool_payouts', JSON.stringify(allPayouts));
-        
-        // Update miner balances (set pending to 0)
-        const minersStr = config.get('depool_miners') || '[]';
-        const miners = JSON.parse(minersStr);
-        
-        payouts.forEach(payout => {
-            const miner = miners.find(m => m.id === payout.minerId);
-            if (miner) {
-                miner.pendingBalance = 0;
-                miner.totalPaid = (miner.totalPaid || 0) + payout.amount;
-            }
-        });
-        
-        config.set('depool_miners', JSON.stringify(miners));
-        
-        logger.info(`Processed ${payouts.length} payouts`);
-        
-        res.json({ success: true, payoutsProcessed: payouts.length });
-    } catch (error) {
-        logger.error('Error processing payouts', error);
-        res.status(500).json({ error: 'Failed to process payouts', message: error.message });
-    }
-});
-
-// Multi-Rig Management Endpoints
+// Multi-Rig Management Endpoints (for managing multiple solo mining rigs)
 app.get('/api/rigs', async (req, res) => {
     try {
         const rigsStr = config.get('rigs');
@@ -2593,9 +2372,9 @@ app.get('/remote', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'remote.html'));
 });
 
-// Serve mobile.html for mobile devices
+// Mobile devices use the main dashboard (responsive design)
 app.get('/mobile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'mobile.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Serve setup page
@@ -2609,8 +2388,9 @@ app.get('/', (req, res) => {
     const userAgent = req.get('user-agent') || '';
     const isMobile = /Mobile|Android|iPhone|iPad/.test(userAgent);
     
-    if (isMobile) {
-        res.sendFile(path.join(__dirname, 'public', 'mobile.html'));
+    if (isMobile && !req.query.dashboard && !req.query.rig) {
+        // Mobile devices get responsive dashboard
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
     } else if (req.query.dashboard || req.query.rig) {
         // Direct dashboard access
         res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -2827,14 +2607,34 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Initialize WebSocket server
+const wsServer = new WebSocketServer(app);
+const httpServer = wsServer.getServer();
+
+// Start broadcasting mining stats via WebSocket
+let lastMiningData = {};
+wsServer.startBroadcasting(() => {
+    // This function will be called to get current data
+    // It will be updated by the mining stats endpoints
+    return lastMiningData;
+}, 5000); // Update every 5 seconds
+
+// Store reference to WebSocket server for broadcasting
+app.locals.wsServer = wsServer;
+app.locals.updateMiningData = (data) => {
+    lastMiningData = data;
+};
+
 // Start server
-app.listen(PORT, HOST, () => {
+httpServer.listen(PORT, HOST, () => {
     if (NODE_ENV === 'development') {
         console.log(`🚀 Quai GPU Miner Dashboard running on http://localhost:${PORT}`);
         console.log(`📊 Open your browser and navigate to the URL above`);
         console.log(`🔗 Node RPC: ${NODE_RPC_URL}`);
+        console.log(`🔌 WebSocket server enabled for real-time updates`);
     } else {
         logger.info(`Server running on ${HOST}:${PORT}`);
+        logger.info(`WebSocket server enabled for real-time updates`);
     }
     if (MINER_API_URL) {
             logger.info(`⛏️  Miner API: ${MINER_API_URL}`);
@@ -2842,3 +2642,4 @@ app.listen(PORT, HOST, () => {
             logger.info(`⛏️  Miner API: Not configured (using mock data)`);
         }
 });
+}

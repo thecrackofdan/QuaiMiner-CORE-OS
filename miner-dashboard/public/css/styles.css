@@ -173,77 +173,7 @@
     box-shadow: var(--glow-red);
 }
 
-/* Enhanced Pool Manager Styles */
-.pool-selection-enhanced {
-    margin-top: 1rem;
-}
-
-.pool-recommendation-card {
-    background: var(--bg-card);
-    border: 2px solid var(--quai-primary);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.pool-recommendation-card.recommended {
-    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(255, 0, 0, 0.1) 100%);
-}
-
-.recommendation-reasons {
-    list-style: none;
-    padding: 0;
-    margin: 1rem 0;
-}
-
-.recommendation-reasons li {
-    padding: 0.5rem 0;
-    color: var(--text-secondary);
-}
-
-.recommendation-reasons li:before {
-    content: "✓ ";
-    color: var(--success-color);
-    font-weight: bold;
-    margin-right: 0.5rem;
-}
-
-.pool-comparison-table {
-    overflow-x: auto;
-    margin: 1.5rem 0;
-}
-
-.pool-comparison-table table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--bg-card);
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.pool-comparison-table th {
-    background: var(--bg-dark);
-    color: var(--quai-primary);
-    padding: 1rem;
-    text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.pool-comparison-table td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-primary);
-}
-
-.pool-comparison-table tr:hover {
-    background: var(--bg-card-hover);
-}
-
-.pool-comparison-table tr.best-pool {
-    background: rgba(255, 0, 0, 0.1);
-    border-left: 3px solid var(--quai-primary);
-}
+/* Pool-related CSS removed - solo mining only */
 
 .badge-best {
     display: inline-block;

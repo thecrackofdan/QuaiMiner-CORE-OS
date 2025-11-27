@@ -77,13 +77,7 @@
                 style="display: none"
                 >Merged Mining</span
               >
-              <a
-                href="/pools.html"
-                class="network-badge"
-                style="text-decoration: none; cursor: pointer; margin-left: 8px"
-                title="View available mining pools"
-                >📊 Pools</a
-              >
+              <!-- Pools link removed - solo mining only -->
             </div>
           </div>
           <div class="header-right">
@@ -100,7 +94,7 @@
                 >🏠 Home</a
               >
               <a
-                href="/mobile.html"
+                href="/dashboard"
                 class="btn-secondary"
                 style="
                   text-decoration: none;
@@ -299,14 +293,14 @@
             </div>
           </div>
 
-          <div class="hero-stat-card quai-glow-strong" style="border: 2px solid var(--success-color);">
+          <div class="hero-stat-card quai-glow-strong" id="dailyProfitCard" style="border: 2px solid var(--success-color);">
             <div class="hero-stat-icon">💰</div>
             <div class="hero-stat-content">
               <h3>
                 Daily Profit
                 <span
                   class="info-icon-small"
-                  data-tooltip="Estimated daily profit after electricity costs. Based on current hash rate, power usage, and network difficulty."
+                  data-tooltip="Real-time daily profit calculation based on current hash rate, power usage, electricity costs, and network difficulty. Updates automatically every 5 seconds."
                   >ℹ️</span
                 >
               </h3>
@@ -1343,93 +1337,15 @@
             </p>
           </div>
 
-          <!-- Pool Selection (shown when pool mode selected) -->
-          <div
-            class="setting-item"
-            id="poolSelectionItem"
-            style="display: none"
-          >
-            <label>
-              Select Pool:
-              <select
-                id="poolSelect"
-                class="currency-select"
-                style="width: 100%; margin-top: 4px"
-              >
-                <option value="">Choose a pool...</option>
-                <option value="official">
-                  Quai Network Official (0.5% fee)
-                </option>
-                <option value="quaiminer">QuaiMiner Pool (1.0% fee)</option>
-                <option value="quaihash">QuaiHash Pool (1.5% fee)</option>
-                <option value="custom">Custom Pool</option>
-              </select>
-            </label>
-            <p class="setting-hint">
-              Select a mining pool or choose custom to enter your own
-            </p>
-
-            <!-- Pool Information Display -->
-            <div
-              id="poolInfo"
-              style="
-                margin-top: 12px;
-                padding: 12px;
-                background: var(--bg-dark);
-                border-radius: 6px;
-                border: 1px solid var(--border-color);
-                display: none;
-              "
-            >
-              <div
-                style="
-                  display: grid;
-                  grid-template-columns: 1fr 1fr;
-                  gap: 8px;
-                  font-size: 0.85rem;
-                "
-              >
-                <div><strong>Fee:</strong> <span id="poolFee">-</span></div>
-                <div>
-                  <strong>Payout:</strong> <span id="poolPayout">-</span>
-                </div>
-                <div>
-                  <strong>Min Payout:</strong> <span id="poolMinPayout">-</span>
-                </div>
-                <div>
-                  <strong>Uptime:</strong> <span id="poolUptime">-</span>
-                </div>
-              </div>
-              <p
-                id="poolDescription"
-                style="
-                  margin-top: 8px;
-                  font-size: 0.8rem;
-                  color: var(--text-secondary);
-                "
-              ></p>
-              <a
-                id="poolGuideLink"
-                href="#"
-                target="_blank"
-                style="
-                  color: var(--quai-primary);
-                  font-size: 0.8rem;
-                  margin-top: 4px;
-                  display: block;
-                "
-                >View Pool Guide →</a
-              >
-            </div>
-          </div>
+          <!-- Pool Selection removed - solo mining only -->
 
           <div class="setting-item">
             <label>
-              Stratum Address / Pool URL:
+              Stratum Address (Your Node's Stratum Proxy):
               <input
                 type="text"
                 id="stratumAddress"
-                placeholder="stratum://localhost:3333 or stratum+tcp://pool.example.com:3333"
+                placeholder="stratum://localhost:3333"
                 style="
                   width: 100%;
                   padding: 8px;
@@ -1442,7 +1358,7 @@
               />
             </label>
             <p class="setting-hint">
-              Your Quai node's stratum proxy (solo) or pool URL (pool mining)
+              Your Quai node's stratum proxy URL (usually stratum://localhost:3333 or stratum://YOUR_NODE_IP:3333)
             </p>
           </div>
 
@@ -1660,18 +1576,19 @@
     <script src="js/toast.js"></script>
     <script src="js/config.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/websocket-client.js"></script>
+    <script src="js/mobile-enhancements.js"></script>
     <script src="js/historical-charts.js"></script>
     <script src="js/profitability-calculator.js"></script>
+    <script src="js/profit-trend-chart.js"></script>
     <script src="js/multi-gpu.js"></script>
     <script src="js/leaderboard.js"></script>
     <script src="js/achievements.js"></script>
     <script src="js/setup-wizard.js"></script>
     <script src="js/enhanced-onboarding.js"></script>
     <script src="js/ml-features.js"></script>
-    <script src="js/pool-manager.js"></script>
     <script src="js/mining-insights.js"></script>
     <script src="js/gpu-tuner.js"></script>
-    <script src="js/pool-integration.js"></script>
     <script src="js/merged-mining-wizard.js"></script>
     <script src="js/profit-optimizer.js"></script>
     <script src="js/multi-rig-manager.js"></script>
@@ -1682,6 +1599,9 @@
     <script src="js/alerts-ui.js"></script>
     <script src="js/staking-manager.js"></script>
     <script src="js/staking-ui.js"></script>
+    <script src="js/logger.js"></script>
+    <script src="js/gpu-optimization-profiles.js"></script>
+    <script src="js/qi-token-calculator.js"></script>
     <script src="js/auto-setup.js"></script>
     <script src="js/smart-defaults.js"></script>
     <script src="js/one-click-mining.js"></script>
@@ -1700,10 +1620,10 @@
           navigator.serviceWorker
             .register("/sw.js")
             .then((registration) => {
-              console.log("Service Worker registered:", registration);
+              if (window.logger) window.logger.info("Service Worker registered", registration);
             })
             .catch((error) => {
-              console.log("Service Worker registration failed:", error);
+              if (window.logger) window.logger.error("Service Worker registration failed", error);
             });
         });
       }

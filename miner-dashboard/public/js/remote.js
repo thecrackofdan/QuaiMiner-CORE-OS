@@ -116,66 +116,6 @@ const installationInstructions = {
             <code>sudo systemctl status quaiminer-miner</code>
             <code>sudo journalctl -u quaiminer-miner -f</code>
         `
-    },
-    docker: {
-        title: 'Docker Container Installation',
-        content: `
-            <h3>Prerequisites</h3>
-            <ul>
-                <li>Docker installed</li>
-                <li>Docker Compose (optional)</li>
-                <li>NVIDIA Docker runtime (for NVIDIA GPUs)</li>
-            </ul>
-            
-            <h3>Step 1: Build or Pull the Image</h3>
-            <p><strong>Build from source:</strong></p>
-            <code>git clone https://github.com/thecrackofdan/quai-gpu-miner.git<br>cd quai-gpu-miner<br>docker build -t quai-gpu-miner/dashboard .</code>
-            
-            <p><strong>Or pull from registry (when available):</strong></p>
-            <code>docker pull quaiminer/core-os:latest</code>
-            
-            <h3>Step 2: Run the Container</h3>
-            <p><strong>Basic:</strong></p>
-            <code>docker run -d --name quaiminer --gpus all -p 3000:3000 quaiminer/core-os:latest</code>
-            
-            <p><strong>With NVIDIA GPU:</strong></p>
-            <code>docker run -d --name quaiminer --runtime=nvidia -e NVIDIA_VISIBLE_DEVICES=all -p 3000:3000 quaiminer/core-os:latest</code>
-            
-            <p><strong>With Volume for Persistence:</strong></p>
-            <code>docker run -d --name quaiminer --gpus all -p 3000:3000 -v quaiminer-data:/data quaiminer/core-os:latest</code>
-            
-            <h3>Step 3: Using Docker Compose</h3>
-            <p>Create <code>docker-compose.yml</code>:</p>
-            <pre><code>version: '3.8'
-services:
-  quaiminer:
-    image: quaiminer/core-os:latest
-    container_name: quaiminer
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    devices:
-      - /dev/dri:/dev/dri
-    volumes:
-      - quaiminer-data:/data
-    environment:
-      - NODE_RPC_URL=http://host.docker.internal:8545
-volumes:
-  quaiminer-data:</code></pre>
-            
-            <p>Start with:</p>
-            <code>docker-compose up -d</code>
-            
-            <h3>Step 4: Access Dashboard</h3>
-            <code>http://localhost:3000</code>
-            
-            <h3>Step 5: Container Management</h3>
-            <code>docker logs quaiminer</code>
-            <code>docker exec -it quaiminer bash</code>
-            <code>docker stop quaiminer</code>
-            <code>docker start quaiminer</code>
-            <code>docker restart quaiminer</code>
-        `
     }
 };
 

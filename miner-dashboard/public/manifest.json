@@ -2,7 +2,7 @@
   "name": "Quai GPU Miner Dashboard",
   "short_name": "QuaiMiner",
   "description": "Production-ready real-time dashboard for solo mining Quai Network",
-  "start_url": "/mobile.html",
+  "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#000000",
