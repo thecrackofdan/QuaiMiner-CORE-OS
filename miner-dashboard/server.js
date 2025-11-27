@@ -2778,6 +2778,50 @@ app.post('/api/auto-switch/config', authenticate, async (req, res) => {
     }
 });
 
+// Quai-specific metrics endpoints
+app.get('/api/quai/metrics', optionalAuth, async (req, res) => {
+    try {
+        const hashRate = parseFloat(req.query.hashRate) || 0;
+        const powerUsage = parseFloat(req.query.powerUsage) || 0;
+        const electricityCost = parseFloat(req.query.electricityCost) || 0.10;
+        
+        const metrics = await quaiMetrics.getMiningMetrics(hashRate, powerUsage, electricityCost);
+        res.json({ success: true, metrics });
+    } catch (error) {
+        logger.error('Error getting Quai metrics:', error);
+        res.status(500).json({ error: 'Failed to get metrics', message: error.message });
+    }
+});
+
+app.get('/api/quai/soap', optionalAuth, async (req, res) => {
+    try {
+        const soapData = await quaiMetrics.getSOAPData();
+        res.json({ success: true, soap: soapData });
+    } catch (error) {
+        logger.error('Error getting SOAP data:', error);
+        res.status(500).json({ error: 'Failed to get SOAP data', message: error.message });
+    }
+});
+
+app.get('/api/quai/lmt-lmr', optionalAuth, async (req, res) => {
+    try {
+        res.json({ success: true, lmtLmr: quaiMetrics.lmtLmrData });
+    } catch (error) {
+        logger.error('Error getting LMT/LMR data:', error);
+        res.status(500).json({ error: 'Failed to get LMT/LMR data', message: error.message });
+    }
+});
+
+app.post('/api/quai/lmt-lmr', authenticate, async (req, res) => {
+    try {
+        quaiMetrics.updateLMTLMR(req.body);
+        res.json({ success: true, message: 'LMT/LMR data updated' });
+    } catch (error) {
+        logger.error('Error updating LMT/LMR data:', error);
+        res.status(500).json({ error: 'Failed to update LMT/LMR data', message: error.message });
+    }
+});
+
 // Serve index.html for all other routes (SPA support)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
